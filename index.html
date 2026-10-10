@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Calcetto</title>
+<style>
+  :root {
+    --bg: #f4f6f3; --card: #fff; --text: #1d2420; --muted: #6b756f; --line: #e3e7e4;
+    --accent: #1f8a4c; --v: #22a05a; --n: #a3aaa6; --p: #d9534f;
+    --gold: #e9b72f; --silver: #b5bcc4; --bronze: #c98a4b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111513; --card: #1a201d; --text: #e8ece9; --muted: #8d9791; --line: #2a322e;
+      --accent: #3cc078; --n: #66706b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--text);
+         font: 15px/1.4 system-ui, -apple-system, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; }
+  h1 { margin: 8px 0 2px; font-size: 1.7rem; }
+  h2 { margin: 28px 0 10px; font-size: 1.1rem; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border-radius: 14px; box-shadow: 0 1px 3px rgb(0 0 0 / .08); }
+
+  .podio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; align-items: end; }
+  .podio .card { text-align: center; padding: 14px 6px; border-top: 4px solid; overflow: hidden; }
+  .podio .p1 { order: 2; border-color: var(--gold); padding-top: 26px; }
+  .podio .p2 { order: 1; border-color: var(--silver); }
+  .podio .p3 { order: 3; border-color: var(--bronze); }
+  .podio .pos { font-size: 1.6rem; font-weight: 800; color: var(--muted); }
+  .podio .nome { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .podio .pt { color: var(--muted); font-size: .85rem; }
+
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 10px 5px; text-align: center; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: 0; }
+  th:first-child, td:first-child { text-align: left; padding-left: 12px; }
+  th { cursor: pointer; user-select: none; font-size: .78rem; color: var(--muted); white-space: nowrap; }
+  th.asc::after { content: " ▲"; } th.desc::after { content: " ▼"; }
+  th.asc, th.desc { color: var(--accent); }
+  td.pt { font-weight: 700; }
+  .forma { display: flex; gap: 3px; margin-top: 3px; }
+  .forma i { width: 8px; height: 8px; border-radius: 50%; }
+  .v { background: var(--v); } .n { background: var(--n); } .p { background: var(--p); }
+  .bar { height: 4px; background: var(--line); border-radius: 2px; margin-top: 3px; }
+  .bar span { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+
+  .storico { list-style: none; padding: 0; margin: 0; }
+  .storico li { padding: 12px; margin-bottom: 8px; }
+  .storico .quando { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+  .storico .match { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+  .storico .match div:last-child { text-align: right; }
+  .storico .ris { font-size: 1.3rem; font-weight: 800; white-space: nowrap; }
+  .storico .team { font-size: .85rem; color: var(--muted); }
+  .storico .win { color: var(--text); font-weight: 600; }
+  .msg { padding: 20px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>⚽ Calcetto</h1>
+  <p class="sub" id="sub">Caricamento…</p>
+  <div class="podio" id="podio"></div>
+  <h2>Classifica</h2>
+  <div class="card scroll">
+    <table>
+      <thead><tr>
+        <th data-k="nome">Giocatore</th>
+        <th data-k="pt">Pt</th>
+        <th data-k="g">G</th>
+        <th data-k="v">V</th>
+        <th data-k="n">N</th>
+        <th data-k="p">P</th>
+        <th data-k="dr">DR</th>
+        <th data-k="pct">%V</th>
+      </tr></thead>
+      <tbody id="righe"></tbody>
+    </table>
+  </div>
+  <h2>Partite</h2>
+  <ul class="storico" id="storico"></ul>
+</main>
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQXJk7tJDQtKmy7UcDHtMJtlKfhHU8AeKoshrYwuvsvXp5re0s92ayPtASH6AdC4yEHclg37c-vn0f2/pub?output=csv';
+
+let dati = [], chiave = 'pt', verso = -1, breve = {};
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const giorno = d => d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+function parseCSV(t) {
+  const righe = [[]];
+  let campo = '', virgolette = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (virgolette) {
+      if (c !== '"') campo += c;
+      else if (t[i + 1] === '"') { campo += '"'; i++; }
+      else virgolette = false;
+    } else if (c === '"') virgolette = true;
+    else if (c === ',') { righe.at(-1).push(campo); campo = ''; }
+    else if (c === '\n') { righe.at(-1).push(campo); campo = ''; righe.push([]); }
+    else if (c !== '\r') campo += c;
+  }
+  righe.at(-1).push(campo);
+  return righe;
+}
+
+// date nel formato gg/mm/aaaa (eventualmente seguite dall'ora)
+function parseData(s) {
+  const [d, m, y] = (s || '').trim().split(' ')[0].split('/').map(Number);
+  return y ? new Date(y < 100 ? 2000 + y : y, m - 1, d) : null;
+}
+
+function mostraClassifica() {
+  const cmp = (a, b) => typeof a[chiave] === 'string' ? a[chiave].localeCompare(b[chiave]) : a[chiave] - b[chiave];
+  dati.sort((a, b) => cmp(a, b) * verso || b.pt - a.pt || b.dr - a.dr || a.nome.localeCompare(b.nome));
+  $('righe').innerHTML = dati.map(r => `<tr>
+    <td>${esc(breve[r.nome])}<div class="forma">${r.forma.map(e => `<i class="${e}"></i>`).join('')}</div></td>
+    <td class="pt">${r.pt}</td><td>${r.g}</td><td>${r.v}</td><td>${r.n}</td><td>${r.p}</td>
+    <td>${r.dr > 0 ? '+' : ''}${r.dr}</td>
+    <td>${r.pct.toFixed(0)}%<div class="bar"><span style="width:${r.pct}%"></span></div></td>
+  </tr>`).join('');
+  document.querySelectorAll('th').forEach(th =>
+    th.className = th.dataset.k === chiave ? (verso > 0 ? 'asc' : 'desc') : '');
+}
+
+document.querySelectorAll('th').forEach(th => th.onclick = () => {
+  const k = th.dataset.k;
+  verso = k === chiave ? -verso : (k === 'nome' ? 1 : -1);
+  chiave = k;
+  mostraClassifica();
+});
+
+fetch(CSV_URL)
+  .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+  .then(testo => {
+    const [intest, ...righe] = parseCSV(testo.trim());
+    const col = nome => intest.findIndex(h => h.trim().toLowerCase() === nome);
+    const [iD, iA, iB, iGA, iGB] = ['data', 'squadra a', 'squadra b', 'gol a', 'gol b'].map(col);
+    if ([iA, iB, iGA, iGB].includes(-1)) throw new Error();
+    const nomi = s => (s || '').split(',').map(x => x.trim()).filter(Boolean);
+
+    const partite = righe
+      .map((r, i) => ({ i, data: parseData(r[iD]) || parseData(r[0]), a: nomi(r[iA]), b: nomi(r[iB]), ga: parseInt(r[iGA]), gb: parseInt(r[iGB]) }))
+      .filter(p => p.data && p.a.length && p.b.length && !isNaN(p.ga) && !isNaN(p.gb))
+      .sort((x, y) => x.data - y.data || x.i - y.i);
+
+    const stats = {};
+    for (const p of partite) {
+      for (const [squadra, fatti, subiti, altra] of [[p.a, p.ga, p.gb, p.b], [p.b, p.gb, p.ga, p.a]]) {
+        const esito = fatti > subiti ? 'v' : fatti < subiti ? 'p' : 'n';
+        for (const nome of squadra) {
+          if (altra.includes(nome)) continue; // spuntato in entrambe le squadre: lo ignoro
+          const s = stats[nome] ??= { nome, g: 0, v: 0, n: 0, p: 0, dr: 0, forma: [] };
+          s[esito]++; s.g++; s.dr += fatti - subiti; s.forma.push(esito);
+        }
+      }
+    }
+    dati = Object.values(stats).map(s => ({ ...s, pt: s.v * 3 + s.n, pct: s.v / s.g * 100, forma: s.forma.slice(-5) }));
+
+    // "Antonio Carchidi" -> "Antonio C.", nome completo se l'abbreviazione è ambigua
+    const abbr = n => { const w = n.split(/\s+/); return w.length > 1 ? `${w[0]} ${w[1][0]}.` : n; };
+    const conta = {};
+    for (const n in stats) conta[abbr(n)] = (conta[abbr(n)] || 0) + 1;
+    for (const n in stats) breve[n] = conta[abbr(n)] > 1 ? n : abbr(n);
+
+    mostraClassifica();
+    $('podio').innerHTML = dati.slice(0, 3).map((r, i) => `<div class="card p${i + 1}">
+      <div class="pos">${i + 1}</div><div class="nome">${esc(breve[r.nome])}</div>
+      <div class="pt">${r.pt} pt · ${r.pct.toFixed(0)}%</div></div>`).join('');
+    $('sub').textContent = partite.length
+      ? `${partite.length} ${partite.length === 1 ? 'partita' : 'partite'} · ultima ${giorno(partite.at(-1).data)}`
+      : 'Nessuna partita registrata';
+    const squadra = (nomi, vince) => `<div class="team${vince ? ' win' : ''}">${esc(nomi.map(n => breve[n] || n).join(', '))}</div>`;
+    $('storico').innerHTML = partite.reverse().map(p => `<li class="card">
+      <div class="quando">${giorno(p.data)}</div>
+      <div class="match">${squadra(p.a, p.ga > p.gb)}<div class="ris">${p.ga} – ${p.gb}</div>${squadra(p.b, p.gb > p.ga)}</div>
+    </li>`).join('');
+  })
+  .catch(() => {
+    $('sub').textContent = '';
+    $('righe').innerHTML = '<tr><td colspan="8" class="msg">Errore nel caricamento dei dati</td></tr>';
+  });
+</script>
+</body>
+</html>
