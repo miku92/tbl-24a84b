@@ -229,12 +229,17 @@ function calcola() {
 
 }
 
-// "Antonio Carchidi" -> "Antonio C.", nome completo se l'abbreviazione è ambigua
+// "Antonio Carchidi" -> "Antonio C.", con più lettere del cognome se serve a distinguerli ("Antonio Pa.", "Antonio Pi.")
 function abbrevia(nomi) {
-  const abbr = n => { const w = n.split(/\s+/); return w.length > 1 ? `${w[0]} ${w[1][0]}.` : n; };
-  const conta = {};
-  for (const n of nomi) conta[abbr(n)] = (conta[abbr(n)] || 0) + 1;
-  for (const n of nomi) breve[n] = conta[abbr(n)] > 1 ? n : abbr(n);
+  const abbr = (n, k) => {
+    const [nome, ...resto] = n.split(/\s+/), cognome = resto.join(' ');
+    return !cognome || k >= cognome.length ? n : `${nome} ${cognome.slice(0, k).trim()}.`;
+  };
+  for (const n of nomi) {
+    let k = 1;
+    while (nomi.some(m => m !== n && abbr(m, k) === abbr(n, k)) && k < n.length) k++;
+    breve[n] = abbr(n, k);
+  }
 }
 
 function mostraClassifica() {
