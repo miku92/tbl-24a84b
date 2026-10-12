@@ -22,9 +22,17 @@
          font: 15px/1.4 system-ui, -apple-system, sans-serif; }
   main { max-width: 720px; margin: 0 auto; }
   h1 { margin: 8px 0 2px; font-size: 1.7rem; }
-  h2 { margin: 28px 0 10px; font-size: 1.1rem; }
-  .sub { color: var(--muted); margin: 0 0 20px; }
+  h2 { margin: 28px 0 10px; font-size: 1.1rem; scroll-margin-top: 12px; }
+  .sub { color: var(--muted); margin: 0 0 12px; }
   .card { background: var(--card); border-radius: 14px; box-shadow: 0 1px 3px rgb(0 0 0 / .08); }
+  .pad { padding: 14px; }
+  .nota { color: var(--muted); font-size: .8rem; margin: 6px 2px 0; }
+  nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  nav a { padding: 5px 12px; border-radius: 99px; background: var(--card); color: var(--text);
+          text-decoration: none; font-size: .85rem; box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+  button { font: inherit; border: 0; border-radius: 10px; padding: 10px 16px; cursor: pointer;
+           background: var(--accent); color: #fff; font-weight: 600; }
+  .cliccabile { cursor: pointer; }
 
   .podio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; align-items: end; }
   .podio .card { text-align: center; padding: 14px 6px; border-top: 4px solid; overflow: hidden; }
@@ -39,16 +47,33 @@
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   th, td { padding: 10px 5px; text-align: center; border-bottom: 1px solid var(--line); }
   tr:last-child td { border-bottom: 0; }
-  th:first-child, td:first-child { text-align: left; padding-left: 12px; }
+  th:first-child, td:first-child { text-align: left; padding-left: 12px; position: sticky; left: 0;
+                                   background: var(--card); white-space: nowrap; }
   th { cursor: pointer; user-select: none; font-size: .78rem; color: var(--muted); white-space: nowrap; }
   th.asc::after { content: " ▲"; } th.desc::after { content: " ▼"; }
   th.asc, th.desc { color: var(--accent); }
   td.pt { font-weight: 700; }
+  .poche { color: var(--muted); opacity: .6; }
   .forma { display: flex; gap: 3px; margin-top: 3px; }
   .forma i { width: 8px; height: 8px; border-radius: 50%; }
   .v { background: var(--v); } .n { background: var(--n); } .p { background: var(--p); }
   .bar { height: 4px; background: var(--line); border-radius: 2px; margin-top: 3px; }
   .bar span { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .tile { padding: 12px; }
+  .tile .lbl { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+  .tile .val { font-size: 1.2rem; font-weight: 800; margin: 2px 0; }
+  .tile .sub2 { font-size: .8rem; color: var(--muted); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .chips label { padding: 6px 12px; border-radius: 99px; border: 1px solid var(--line); cursor: pointer;
+                 font-size: .9rem; user-select: none; }
+  .chips input { display: none; }
+  .chips label:has(input:checked) { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .squadre { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .squadre h3 { margin: 0 0 6px; font-size: .95rem; }
+  .squadre ul { margin: 0; padding-left: 18px; }
 
   .storico { list-style: none; padding: 0; margin: 0; }
   .storico li { padding: 12px; margin-bottom: 8px; }
@@ -59,19 +84,39 @@
   .storico .team { font-size: .85rem; color: var(--muted); }
   .storico .win { color: var(--text); font-weight: 600; }
   .msg { padding: 20px; text-align: center; color: var(--muted); }
+
+  dialog { border: 0; border-radius: 16px; padding: 0; width: min(440px, calc(100% - 32px));
+           background: var(--bg); color: var(--text); }
+  dialog::backdrop { background: rgb(0 0 0 / .5); }
+  .scheda { padding: 18px; }
+  .scheda h2 { margin: 0 0 12px; padding-right: 30px; }
+  .scheda .chiudi { position: absolute; top: 10px; right: 10px; background: none; color: var(--muted);
+                    font-size: 1.3rem; padding: 4px 10px; }
+  .scheda .tiles { grid-template-columns: 1fr 1fr; }
+  .ultime { list-style: none; padding: 0; margin: 0; }
+  .ultime li { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .ultime li:last-child { border-bottom: 0; }
+  .ultime b { width: 24px; text-align: center; border-radius: 6px; color: #fff; font-size: .8rem; padding: 2px 0; }
+  .ultime span { color: var(--muted); font-size: .85rem; margin-left: auto; }
 </style>
 </head>
 <body>
 <main>
   <h1>⚽ Amici del Calcetto</h1>
   <p class="sub" id="sub">Caricamento…</p>
+  <nav>
+    <a href="#classifica">Classifica</a><a href="#record">Record</a>
+    <a href="#squadre">Fai le squadre</a><a href="#partite">Partite</a>
+  </nav>
   <div class="podio" id="podio"></div>
-  <h2>Classifica</h2>
+
+  <h2 id="classifica">Classifica</h2>
   <div class="card scroll">
     <table>
       <thead><tr>
         <th data-k="nome">Giocatore</th>
         <th data-k="pt">Pt</th>
+        <th data-k="mp">Media</th>
         <th data-k="g">G</th>
         <th data-k="v">V</th>
         <th data-k="n">N</th>
@@ -82,16 +127,40 @@
       <tbody id="righe"></tbody>
     </table>
   </div>
-  <h2>Partite</h2>
+  <p class="nota" id="notaMedia"></p>
+
+  <h2 id="record">Record</h2>
+  <div class="tiles" id="tiles"></div>
+
+  <h2 id="squadre">Fai le squadre</h2>
+  <div class="card pad">
+    <div class="chips" id="convocati"></div>
+    <button id="crea">Crea squadre</button>
+    <div id="proposta"></div>
+  </div>
+  <p class="nota">Le squadre vengono bilanciate sulla media punti di ciascun giocatore. Chi ha poche partite viene considerato vicino alla media del gruppo. Premi di nuovo per un'altra combinazione equilibrata.</p>
+
+  <h2 id="partite">Partite</h2>
   <ul class="storico" id="storico"></ul>
 </main>
+
+<dialog id="dialogo"><div class="scheda">
+  <form method="dialog"><button class="chiudi" aria-label="Chiudi">✕</button></form>
+  <div id="scheda"></div>
+</div></dialog>
+
 <script>
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQXJk7tJDQtKmy7UcDHtMJtlKfhHU8AeKoshrYwuvsvXp5re0s92ayPtASH6AdC4yEHclg37c-vn0f2/pub?output=csv';
+const MIN_PARTITE = 3;  // partite minime per entrare nella classifica per media
+const MIN_INSIEME = 2;  // partite minime in comune per compagni, avversari e coppie
 
-let dati = [], chiave = 'pt', verso = -1, breve = {};
+let partite = [], dati = [], stats = {}, breve = {}, mediaGruppo = 0, chiave = 'pt', verso = -1;
 const $ = id => document.getElementById(id);
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const giorno = d => d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const dec = x => x.toFixed(1).replace('.', ',');
+const nome = n => esc(breve[n] || n);
+const PUNTI = { v: 3, n: 1, p: 0 };
 
 function parseCSV(t) {
   const righe = [[]];
@@ -117,17 +186,143 @@ function parseData(s) {
   return y ? new Date(y < 100 ? 2000 + y : y, m - 1, d) : null;
 }
 
+// serie più lunga e serie in corso di esiti che soddisfano ok()
+function serie(esiti, ok) {
+  let max = 0, cur = 0;
+  for (const e of esiti) { cur = ok(e) ? cur + 1 : 0; max = Math.max(max, cur); }
+  return { max, cur };
+}
+
+// voce con la media punti più alta (segno 1, solo se più vinte che perse)
+// o più bassa (segno -1, solo se più perse che vinte), con almeno MIN_INSIEME partite
+const migliore = (voci, segno) => voci.filter(([, x]) => x.g >= MIN_INSIEME && segno * (x.v - x.p) > 0)
+  .sort(([, a], [, b]) => segno * (b.pt / b.g - a.pt / a.g) || b.g - a.g)[0];
+
+function calcola() {
+  const aggiungi = (o, k, e) => { const x = o[k] ??= { g: 0, pt: 0, v: 0, n: 0, p: 0 }; x.g++; x.pt += PUNTI[e]; x[e]++; };
+  stats = {};
+  for (const p of partite) {
+    for (const [mia, fatti, subiti, altra] of [[p.a, p.ga, p.gb, p.b], [p.b, p.gb, p.ga, p.a]]) {
+      const esito = fatti > subiti ? 'v' : fatti < subiti ? 'p' : 'n';
+      const validi = mia.filter(n => !altra.includes(n)); // chi è spuntato in entrambe le squadre viene ignorato
+      for (const n of validi) {
+        const s = stats[n] ??= { nome: n, g: 0, v: 0, n: 0, p: 0, dr: 0, gf: 0, gs: 0, storia: [], con: {}, contro: {} };
+        s[esito]++; s.g++; s.dr += fatti - subiti; s.gf += fatti; s.gs += subiti;
+        s.storia.push({ p, esito, fatti, subiti });
+        for (const c of validi) if (c !== n) aggiungi(s.con, c, esito);
+        for (const c of altra) if (!mia.includes(c)) aggiungi(s.contro, c, esito);
+      }
+    }
+  }
+  for (const s of Object.values(stats)) {
+    const esiti = s.storia.map(x => x.esito);
+    Object.assign(s, {
+      pt: s.v * 3 + s.n, mp: (s.v * 3 + s.n) / s.g, pct: s.v / s.g * 100, forma: esiti.slice(-5),
+      vittorie: serie(esiti, e => e === 'v'), imbattuto: serie(esiti, e => e !== 'p'),
+    });
+  }
+  dati = Object.values(stats);
+  mediaGruppo = dati.reduce((t, s) => t + s.pt, 0) / dati.reduce((t, s) => t + s.g, 0) || 0;
+
+  // "Antonio Carchidi" -> "Antonio C.", nome completo se l'abbreviazione è ambigua
+  const abbr = n => { const w = n.split(/\s+/); return w.length > 1 ? `${w[0]} ${w[1][0]}.` : n; };
+  const conta = {};
+  for (const n in stats) conta[abbr(n)] = (conta[abbr(n)] || 0) + 1;
+  for (const n in stats) breve[n] = conta[abbr(n)] > 1 ? n : abbr(n);
+}
+
 function mostraClassifica() {
   const cmp = (a, b) => typeof a[chiave] === 'string' ? a[chiave].localeCompare(b[chiave]) : a[chiave] - b[chiave];
-  dati.sort((a, b) => cmp(a, b) * verso || b.pt - a.pt || b.dr - a.dr || a.nome.localeCompare(b.nome));
-  $('righe').innerHTML = dati.map(r => `<tr>
-    <td>${esc(breve[r.nome])}<div class="forma">${r.forma.map(e => `<i class="${e}"></i>`).join('')}</div></td>
-    <td class="pt">${r.pt}</td><td>${r.g}</td><td>${r.v}</td><td>${r.n}</td><td>${r.p}</td>
+  // ordinando per media, chi ha meno di MIN_PARTITE partite finisce in fondo
+  const pochi = (a, b) => chiave === 'mp' ? (a.g < MIN_PARTITE) - (b.g < MIN_PARTITE) : 0;
+  dati.sort((a, b) => pochi(a, b) || cmp(a, b) * verso || b.pt - a.pt || b.dr - a.dr || a.nome.localeCompare(b.nome));
+  $('righe').innerHTML = dati.map(r => `<tr class="cliccabile" data-nome="${esc(r.nome)}">
+    <td>${nome(r.nome)}<div class="forma">${r.forma.map(e => `<i class="${e}"></i>`).join('')}</div></td>
+    <td class="pt">${r.pt}</td><td${r.g < MIN_PARTITE ? ' class="poche"' : ''}>${dec(r.mp)}</td>
+    <td>${r.g}</td><td>${r.v}</td><td>${r.n}</td><td>${r.p}</td>
     <td>${r.dr > 0 ? '+' : ''}${r.dr}</td>
     <td>${r.pct.toFixed(0)}%<div class="bar"><span style="width:${r.pct}%"></span></div></td>
   </tr>`).join('');
   document.querySelectorAll('th').forEach(th =>
     th.className = th.dataset.k === chiave ? (verso > 0 ? 'asc' : 'desc') : '');
+}
+
+function mostraRecord() {
+  const tile = (lbl, val, sub) => `<div class="card tile"><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="sub2">${sub}</div></div>`;
+  const max = (arr, f) => arr.reduce((m, x) => f(x) > f(m) ? x : m, arr[0]);
+  const larga = max(partite, p => Math.abs(p.ga - p.gb));
+  const gol = max(partite, p => p.ga + p.gb);
+  const totGol = partite.reduce((t, p) => t + p.ga + p.gb, 0);
+  const serieV = max(dati, s => s.vittorie.max);
+  const imbattuto = max(dati, s => s.imbattuto.max);
+  const fedele = max(dati, s => s.g);
+  const coppie = dati.flatMap(s => Object.entries(s.con).filter(([c]) => s.nome < c).map(([c, x]) => [`${nome(s.nome)} & ${nome(c)}`, x]));
+  const coppia = migliore(coppie, 1);
+  $('tiles').innerHTML = [
+    tile('Gol a partita', dec(totGol / partite.length), `${totGol} gol in ${partite.length} partite`),
+    tile('Vittoria più larga', `${larga.ga} – ${larga.gb}`, giorno(larga.data)),
+    tile('Partita con più gol', `${gol.ga} – ${gol.gb}`, giorno(gol.data)),
+    tile('Coppia più vincente', coppia ? coppia[0] : '—',
+      coppia ? `${coppia[1].v} vinte su ${coppia[1].g} insieme` : 'nessuna per ora'),
+    tile('Più vittorie di fila', nome(serieV.nome), `${serieV.vittorie.max} vittorie consecutive`),
+    tile('Più a lungo imbattuto', nome(imbattuto.nome), `${imbattuto.imbattuto.max} partite senza perdere`),
+    tile('Fedelissimo', nome(fedele.nome), `${fedele.g} presenze su ${partite.length}`),
+  ].join('');
+}
+
+function apriScheda(n) {
+  const s = stats[n];
+  const tile = (lbl, val, sub = '') => `<div class="card tile"><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="sub2">${sub}</div></div>`;
+  const ultimo = s.storia.at(-1).esito;
+  const inCorso = { v: ['vittoria', 'vittorie'], n: ['pareggio', 'pareggi'], p: ['sconfitta', 'sconfitte'] }[ultimo];
+  const lunghezza = serie(s.storia.map(x => x.esito), e => e === ultimo).cur;
+  const compagno = migliore(Object.entries(s.con), 1);
+  const bestia = migliore(Object.entries(s.contro), -1);
+  const coppia = (x, testo) => x ? `<span class="sub2">${testo(x[1])}</span>` : '';
+  $('scheda').innerHTML = `<h2>${nome(n)}</h2>
+    <div class="tiles">
+      ${tile('Punti', s.pt, `${dec(s.mp)} a partita`)}
+      ${tile('Presenze', `${s.g}/${partite.length}`, `${Math.round(s.g / partite.length * 100)}% delle partite`)}
+      ${tile('Gol squadra', `${dec(s.gf / s.g)} – ${dec(s.gs / s.g)}`, 'fatti – subiti a partita')}
+      ${tile('Serie in corso', lunghezza, lunghezza === 1 ? inCorso[0] : inCorso[1])}
+      ${tile('Record vittorie', s.vittorie.max, 'di fila')}
+      ${tile('Record imbattuto', s.imbattuto.max, 'partite di fila senza perdere')}
+      ${tile('Compagno migliore', compagno ? nome(compagno[0]) : '—',
+        compagno ? `${compagno[1].v} vinte su ${compagno[1].g} insieme` : 'nessuno per ora')}
+      ${tile('Bestia nera', bestia ? nome(bestia[0]) : '—',
+        bestia ? `${bestia[1].p} perse su ${bestia[1].g} contro` : 'nessuna per ora')}
+    </div>
+    <h2 style="margin-top:18px">Ultime partite</h2>
+    <ul class="ultime card pad">${s.storia.slice(-5).reverse().map(x =>
+      `<li><b class="${x.esito}">${x.esito.toUpperCase()}</b>${x.fatti} – ${x.subiti}<span>${giorno(x.p.data)}</span></li>`).join('')}</ul>`;
+  $('dialogo').showModal();
+}
+
+function mostraConvocati() {
+  $('convocati').innerHTML = dati.map(s => s.nome).sort((a, b) => breve[a].localeCompare(breve[b]))
+    .map(n => `<label><input type="checkbox" value="${esc(n)}">${nome(n)}</label>`).join('');
+}
+
+// tra tutte le divisioni possibili, ne sceglie a caso una tra le più equilibrate
+function creaSquadre() {
+  const scelti = [...document.querySelectorAll('#convocati input:checked')].map(i => i.value);
+  const n = scelti.length;
+  if (n < 4 || n > 20) { $('proposta').innerHTML = `<p class="nota">Seleziona da 4 a 20 giocatori.</p>`; return; }
+  const K = 3; // peso della media del gruppo per chi ha giocato poco
+  const forza = scelti.map(x => (stats[x].pt + K * mediaGruppo) / (stats[x].g + K));
+  const tot = forza.reduce((a, b) => a + b, 0), meta = Math.floor(n / 2);
+  const divisioni = [];
+  for (let m = 0; m < 1 << n; m++) {
+    let k = 0, somma = 0;
+    for (let i = 0; i < n; i++) if (m >> i & 1) { k++; somma += forza[i]; }
+    if (k === meta) divisioni.push([m, Math.abs(tot - 2 * somma)]);
+  }
+  const best = Math.min(...divisioni.map(d => d[1]));
+  const buone = divisioni.filter(d => d[1] <= best + 0.15);
+  const [m] = buone[Math.floor(Math.random() * buone.length)];
+  const A = scelti.filter((_, i) => m >> i & 1), B = scelti.filter((_, i) => !(m >> i & 1));
+  const lista = (titolo, sq) => `<div><h3>${titolo}</h3><ul>${sq.map(x => `<li>${nome(x)}</li>`).join('')}</ul></div>`;
+  $('proposta').innerHTML = `<div class="squadre">${lista('Squadra A', A)}${lista('Squadra B', B)}</div>`;
 }
 
 document.querySelectorAll('th').forEach(th => th.onclick = () => {
@@ -136,6 +331,12 @@ document.querySelectorAll('th').forEach(th => th.onclick = () => {
   chiave = k;
   mostraClassifica();
 });
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-nome]');
+  if (el) apriScheda(el.dataset.nome);
+});
+$('dialogo').onclick = e => { if (e.target === $('dialogo')) $('dialogo').close(); };
+$('crea').onclick = creaSquadre;
 
 fetch(CSV_URL)
   .then(r => { if (!r.ok) throw new Error(); return r.text(); })
@@ -146,46 +347,31 @@ fetch(CSV_URL)
     if ([iA, iB, iGA, iGB].includes(-1)) throw new Error();
     const nomi = s => (s || '').split(',').map(x => x.trim()).filter(Boolean);
 
-    const partite = righe
+    partite = righe
       .map((r, i) => ({ i, data: parseData(r[iD]) || parseData(r[0]), a: nomi(r[iA]), b: nomi(r[iB]), ga: parseInt(r[iGA]), gb: parseInt(r[iGB]) }))
       .filter(p => p.data && p.a.length && p.b.length && !isNaN(p.ga) && !isNaN(p.gb))
       .sort((x, y) => x.data - y.data || x.i - y.i);
+    if (!partite.length) { $('sub').textContent = 'Nessuna partita registrata'; return; }
 
-    const stats = {};
-    for (const p of partite) {
-      for (const [squadra, fatti, subiti, altra] of [[p.a, p.ga, p.gb, p.b], [p.b, p.gb, p.ga, p.a]]) {
-        const esito = fatti > subiti ? 'v' : fatti < subiti ? 'p' : 'n';
-        for (const nome of squadra) {
-          if (altra.includes(nome)) continue; // spuntato in entrambe le squadre: lo ignoro
-          const s = stats[nome] ??= { nome, g: 0, v: 0, n: 0, p: 0, dr: 0, forma: [] };
-          s[esito]++; s.g++; s.dr += fatti - subiti; s.forma.push(esito);
-        }
-      }
-    }
-    dati = Object.values(stats).map(s => ({ ...s, pt: s.v * 3 + s.n, pct: s.v / s.g * 100, forma: s.forma.slice(-5) }));
-
-    // "Antonio Carchidi" -> "Antonio C.", nome completo se l'abbreviazione è ambigua
-    const abbr = n => { const w = n.split(/\s+/); return w.length > 1 ? `${w[0]} ${w[1][0]}.` : n; };
-    const conta = {};
-    for (const n in stats) conta[abbr(n)] = (conta[abbr(n)] || 0) + 1;
-    for (const n in stats) breve[n] = conta[abbr(n)] > 1 ? n : abbr(n);
-
+    calcola();
     mostraClassifica();
-    $('podio').innerHTML = dati.slice(0, 3).map((r, i) => `<div class="card p${i + 1}">
-      <div class="pos">${i + 1}</div><div class="nome">${esc(breve[r.nome])}</div>
+    mostraRecord();
+    mostraConvocati();
+    $('notaMedia').textContent = `Tocca un giocatore per la sua scheda. Ordinando per media, chi ha meno di ${MIN_PARTITE} partite va in fondo.`;
+    $('podio').innerHTML = dati.slice(0, 3).map((r, i) => `<div class="card cliccabile p${i + 1}" data-nome="${esc(r.nome)}">
+      <div class="pos">${i + 1}</div><div class="nome">${nome(r.nome)}</div>
       <div class="pt">${r.pt} pt · ${r.pct.toFixed(0)}%</div></div>`).join('');
-    $('sub').textContent = partite.length
-      ? `${partite.length} ${partite.length === 1 ? 'partita' : 'partite'} · ultima ${giorno(partite.at(-1).data)}`
-      : 'Nessuna partita registrata';
-    const squadra = (nomi, vince) => `<div class="team${vince ? ' win' : ''}">${esc(nomi.map(n => breve[n] || n).join(', '))}</div>`;
-    $('storico').innerHTML = partite.reverse().map(p => `<li class="card">
+    $('sub').textContent = `${partite.length} ${partite.length === 1 ? 'partita' : 'partite'} · ultima ${giorno(partite.at(-1).data)}`;
+    const squadra = (nomi, vince) => `<div class="team${vince ? ' win' : ''}">${nomi.map(nome).join(', ')}</div>`;
+    $('storico').innerHTML = [...partite].reverse().map(p => `<li class="card">
       <div class="quando">${giorno(p.data)}</div>
       <div class="match">${squadra(p.a, p.ga > p.gb)}<div class="ris">${p.ga} – ${p.gb}</div>${squadra(p.b, p.gb > p.ga)}</div>
     </li>`).join('');
   })
-  .catch(() => {
+  .catch(e => {
+    console.error(e);
     $('sub').textContent = '';
-    $('righe').innerHTML = '<tr><td colspan="8" class="msg">Errore nel caricamento dei dati</td></tr>';
+    $('righe').innerHTML = '<tr><td colspan="9" class="msg">Errore nel caricamento dei dati</td></tr>';
   });
 </script>
 </body>
