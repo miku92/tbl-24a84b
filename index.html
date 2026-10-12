@@ -151,10 +151,12 @@
 
 <script>
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQXJk7tJDQtKmy7UcDHtMJtlKfhHU8AeKoshrYwuvsvXp5re0s92ayPtASH6AdC4yEHclg37c-vn0f2/pub?output=csv';
+// facoltativo: CSV di un foglio con l'elenco di tutti i giocatori (colonna "Giocatore"), per "Fai le squadre"
+const GIOCATORI_URL = '';
 const MIN_PARTITE = 3;  // partite minime per entrare nella classifica per media
 const MIN_INSIEME = 2;  // partite minime in comune per compagni, avversari e coppie
 
-let partite = [], dati = [], stats = {}, breve = {}, mediaGruppo = 0, chiave = 'pt', verso = -1;
+let partite = [], dati = [], stats = {}, breve = {}, tutti = [], mediaGruppo = 0, chiave = 'pt', verso = -1;
 const $ = id => document.getElementById(id);
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const giorno = d => d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -224,11 +226,14 @@ function calcola() {
   dati = Object.values(stats);
   mediaGruppo = dati.reduce((t, s) => t + s.pt, 0) / dati.reduce((t, s) => t + s.g, 0) || 0;
 
-  // "Antonio Carchidi" -> "Antonio C.", nome completo se l'abbreviazione è ambigua
+}
+
+// "Antonio Carchidi" -> "Antonio C.", nome completo se l'abbreviazione è ambigua
+function abbrevia(nomi) {
   const abbr = n => { const w = n.split(/\s+/); return w.length > 1 ? `${w[0]} ${w[1][0]}.` : n; };
   const conta = {};
-  for (const n in stats) conta[abbr(n)] = (conta[abbr(n)] || 0) + 1;
-  for (const n in stats) breve[n] = conta[abbr(n)] > 1 ? n : abbr(n);
+  for (const n of nomi) conta[abbr(n)] = (conta[abbr(n)] || 0) + 1;
+  for (const n of nomi) breve[n] = conta[abbr(n)] > 1 ? n : abbr(n);
 }
 
 function mostraClassifica() {
@@ -299,7 +304,7 @@ function apriScheda(n) {
 }
 
 function mostraConvocati() {
-  $('convocati').innerHTML = dati.map(s => s.nome).sort((a, b) => breve[a].localeCompare(breve[b]))
+  $('convocati').innerHTML = tutti.sort((a, b) => breve[a].localeCompare(breve[b]))
     .map(n => `<label><input type="checkbox" value="${esc(n)}">${nome(n)}</label>`).join('');
 }
 
@@ -309,7 +314,7 @@ function creaSquadre() {
   const n = scelti.length;
   if (n < 4 || n > 20) { $('proposta').innerHTML = `<p class="nota">Seleziona da 4 a 20 giocatori.</p>`; return; }
   const K = 3; // peso della media del gruppo per chi ha giocato poco
-  const forza = scelti.map(x => (stats[x].pt + K * mediaGruppo) / (stats[x].g + K));
+  const forza = scelti.map(x => ((stats[x]?.pt || 0) + K * mediaGruppo) / ((stats[x]?.g || 0) + K));
   const tot = forza.reduce((a, b) => a + b, 0), meta = Math.floor(n / 2);
   const divisioni = [];
   for (let m = 0; m < 1 << n; m++) {
@@ -338,9 +343,9 @@ document.addEventListener('click', e => {
 $('dialogo').onclick = e => { if (e.target === $('dialogo')) $('dialogo').close(); };
 $('crea').onclick = creaSquadre;
 
-fetch(CSV_URL)
-  .then(r => { if (!r.ok) throw new Error(); return r.text(); })
-  .then(testo => {
+const scarica = url => fetch(url).then(r => { if (!r.ok) throw new Error(url); return r.text(); });
+Promise.all([scarica(CSV_URL), GIOCATORI_URL ? scarica(GIOCATORI_URL).catch(() => '') : ''])
+  .then(([testo, elenco]) => {
     const [intest, ...righe] = parseCSV(testo.trim());
     const col = nome => intest.findIndex(h => h.trim().toLowerCase() === nome);
     const [iD, iA, iB, iGA, iGB] = ['data', 'squadra a', 'squadra b', 'gol a', 'gol b'].map(col);
@@ -354,6 +359,10 @@ fetch(CSV_URL)
     if (!partite.length) { $('sub').textContent = 'Nessuna partita registrata'; return; }
 
     calcola();
+    const [intG, ...righeG] = parseCSV(elenco.trim());
+    const iG = Math.max(0, intG.findIndex(h => h.trim().toLowerCase() === 'giocatore'));
+    tutti = [...new Set([...Object.keys(stats), ...righeG.map(r => (r[iG] || '').trim()).filter(Boolean)])];
+    abbrevia(tutti);
     mostraClassifica();
     mostraRecord();
     mostraConvocati();
